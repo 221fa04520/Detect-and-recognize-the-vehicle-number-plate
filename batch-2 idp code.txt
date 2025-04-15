@@ -1,0 +1,31 @@
+clc; clear; close all;
+
+image = imread('images.jpg');  
+grayImage = rgb2gray(image);
+filteredImage = medfilt2(grayImage, [3, 3]);
+edges = edge(filteredImage, 'Canny');
+se = strel('rectangle', [5, 5]);  
+dilatedEdges = imdilate(edges, se);  
+props = regionprops(dilatedEdges, 'BoundingBox', 'Area');
+if isempty(props)
+    error('No license plate detected.');
+end
+[~, idx] = max([props.Area]);
+plateBox = props(idx).BoundingBox;
+plateRegion = imcrop(grayImage, plateBox);
+threshold = graythresh(plateRegion);  
+plateBinary = imbinarize(plateRegion, threshold); 
+imwrite(plateBinary, 'plate_temp.jpg');
+disp('✅ Binary license plate image saved as "plate_temp.jpg".');
+figure;
+subplot(1, 3, 1);
+imshow(image);
+title('Original Image');
+subplot(1, 3, 2);
+imshow(plateRegion);
+title('Cropped License Plate');
+subplot(1, 3, 3);
+imshow(plateBinary);
+title('Binary Plate Image');
+disp('⚠️ OCR not performed in MATLAB Online unless Computer Vision Toolbox is available.');
+disp('➡️ You can upload "plate_temp.jpg" to https://www.onlineocr.net/ to extract text.');
